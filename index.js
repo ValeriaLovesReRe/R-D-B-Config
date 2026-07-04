@@ -26,6 +26,12 @@ bot.on('messageCreate', (message) => {
         });
         if (messages.length > 200) messages.shift();
     }
+
+    // Basic DM Command
+    if (message.content.toLowerCase() === '!dm' && message.reference) {
+        message.channel.send("DM request received from " + message.author.username + " (Feature coming soon)");
+        message.delete().catch(() => {});
+    }
 });
 
 app.get('/messages', (req, res) => {
@@ -36,7 +42,7 @@ app.post('/send', (req, res) => {
     const { author, content } = req.body;
     
     if (!author || !content) {
-        return res.status(400).send("Missing author or content");
+        return res.status(400).send("Missing data");
     }
 
     const channel = bot.channels.cache.get(DISCORD_CHANNEL_ID);
@@ -44,7 +50,7 @@ app.post('/send', (req, res) => {
         channel.send(`**${author}** (Roblox): ${content}`)
             .then(() => res.sendStatus(200))
             .catch(err => {
-                console.error("Failed to send message:", err);
+                console.error(err);
                 res.status(500).send("Failed to send");
             });
     } else {
