@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const DISCORD_CHANNEL_ID = "PUT_YOUR_CHANNEL_ID_HERE";   // ← Change this
+const DISCORD_CHANNEL_ID = "1522985065854795986"; // Your channel ID
 const BOT_TOKEN = process.env.DISCORD_TOKEN;
 
 const bot = new Client({
@@ -13,8 +13,8 @@ const bot = new Client({
 
 let messages = [];
 
-bot.on('ready', () => {
-    console.log(`Bot online as ${bot.user.tag}`);
+bot.once('ready', () => {   // Changed to once + ready
+    console.log(`✅ Bot online as ${bot.user.tag}`);
 });
 
 bot.on('messageCreate', (message) => {
@@ -44,7 +44,7 @@ app.post('/send', (req, res) => {
     }
 });
 
-bot.login(BOT_TOKEN);
+bot.login(BOT_TOKEN).catch(console.error);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
