@@ -12,12 +12,13 @@ const bot = new Client({
 });
 
 let messages = [];
+let dmRequests = new Map(); // Simple DM request storage
 
 bot.once('ready', () => {
     console.log(`✅ Bot online as ${bot.user.tag}`);
 });
 
-bot.on('messageCreate', (message) => {
+bot.on('messageCreate', async (message) => {
     if (message.channel.id === DISCORD_CHANNEL_ID && !message.author.bot) {
         messages.push({
             id: Date.now(),
@@ -27,9 +28,38 @@ bot.on('messageCreate', (message) => {
         if (messages.length > 200) messages.shift();
     }
 
-    // Basic DM Command
+    // !DM Command
     if (message.content.toLowerCase() === '!dm' && message.reference) {
-        message.channel.send("DM request received from " + message.author.username + " (Feature coming soon)");
+        const referencedMsg = await message.channel.messages.fetch(message.reference.messageId);
+        const targetUser = referencedMsg.author;
+
+        if (targetUser.bot) return message.reply("Can't DM bots.");
+
+        const dmChannel = await message.guild.channels.create({
+            name: `dm-${message.author.username}-${targetUser.username}`,
+            type: 0,
+            permissionOverwrites: [
+                {
+                    id: message.guild.id,
+                    deny: ['ViewChannel']
+                },
+                {
+                    id: message.author.id,
+                    allow: ['ViewChannel', 'SendMessages']
+                },
+                {
+                    id: targetUser.id,
+                    allow: ['ViewChannel', 'SendMessages']
+                },
+                {
+                    id: bot.user.id,
+                    allow: ['ViewChannel', 'SendMessages']
+                }
+            ]
+        });
+
+        dmChannel.send(`Private DM started between ${message.author} and ${targetUser}`);
+        message.reply(`DM Channel created: ${dmChannel}`);
         message.delete().catch(() => {});
     }
 });
@@ -40,26 +70,15 @@ app.get('/messages', (req, res) => {
 
 app.post('/send', (req, res) => {
     const { author, content } = req.body;
-    
-    if (!author || !content) {
-        return res.status(400).send("Missing data");
-    }
-
     const channel = bot.channels.cache.get(DISCORD_CHANNEL_ID);
     if (channel) {
-        channel.send(`**${author}** (Roblox): ${content}`)
-            .then(() => res.sendStatus(200))
-            .catch(err => {
-                console.error(err);
-                res.status(500).send("Failed to send");
-            });
+        channel.send(`**${author}** (Roblox): ${content}`);
+        res.sendStatus(200);
     } else {
         res.status(404).send("Channel not found");
     }
 });
 
-bot.login(BOT_TOKEN).catch(err => console.error("Login error:", err));
+bot.login(BOT_TOKEN).catch(err => console.error(err));
 
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
