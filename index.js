@@ -4,7 +4,7 @@ const app = express();
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const DISCORD_CHANNEL_ID = "1522985065854795986"; // Your channel ID
+const DISCORD_CHANNEL_ID = "1522985065854795986"; // Your channel
 const BOT_TOKEN = process.env.DISCORD_TOKEN;
 
 const bot = new Client({
@@ -13,7 +13,7 @@ const bot = new Client({
 
 let messages = [];
 
-bot.once('ready', () => {   // Changed to once + ready
+bot.once('ready', () => {
     console.log(`✅ Bot online as ${bot.user.tag}`);
 });
 
@@ -24,7 +24,7 @@ bot.on('messageCreate', (message) => {
             author: message.author.username,
             content: message.content
         });
-        if (messages.length > 100) messages.shift();
+        if (messages.length > 150) messages.shift();
     }
 });
 
@@ -44,8 +44,10 @@ app.post('/send', (req, res) => {
     }
 });
 
-bot.login(BOT_TOKEN).catch(console.error);
+bot.login(BOT_TOKEN).catch(err => {
+    console.error("Login failed:", err);
+});
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
